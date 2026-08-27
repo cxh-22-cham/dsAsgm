@@ -32,17 +32,73 @@ def apply_style() -> None:
     st.markdown(
         """
         <style>
-        .stApp { background: #f8fafc; color: #111827; }
-        [data-testid="stHeader"] { background: rgba(248,250,252,.95); }
-        h1, h2, h3 { color: #0f172a; }
+        :root { color-scheme: light; }
+        .stApp, [data-testid="stAppViewContainer"] { background: #f8fafc !important; color: #111827 !important; }
+        [data-testid="stHeader"] { background: rgba(248,250,252,.97) !important; }
+        [data-testid="stAppViewContainer"] h1,
+        [data-testid="stAppViewContainer"] h2,
+        [data-testid="stAppViewContainer"] h3,
+        [data-testid="stAppViewContainer"] h4,
+        [data-testid="stAppViewContainer"] p,
+        [data-testid="stAppViewContainer"] label,
+        [data-testid="stAppViewContainer"] span { color: #111827 !important; opacity: 1 !important; }
+
+        /* Keep every input readable even when the viewer uses a dark browser theme. */
+        [data-testid="stNumberInput"] [data-baseweb="input"],
+        [data-testid="stNumberInput"] input {
+            background: #ffffff !important;
+            color: #111827 !important;
+            -webkit-text-fill-color: #111827 !important;
+            border-color: #64748b !important;
+            opacity: 1 !important;
+        }
+        [data-testid="stNumberInput"] input:disabled {
+            background: #e2e8f0 !important;
+            color: #334155 !important;
+            -webkit-text-fill-color: #334155 !important;
+        }
+        [data-testid="stNumberInput"] button {
+            background: #e2e8f0 !important;
+            color: #111827 !important;
+        }
+        [data-testid="stNumberInput"] button svg { fill: #111827 !important; }
+        [data-testid="stWidgetLabel"] p { color: #0f172a !important; font-weight: 700 !important; }
+
+        /* Selectors and tabs remain high contrast under either system theme. */
+        [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+            background: #ffffff !important;
+            color: #111827 !important;
+            border: 1px solid #64748b !important;
+        }
+        [data-baseweb="tab-list"] { gap: .35rem; }
+        button[data-baseweb="tab"] p { color: #334155 !important; font-weight: 700 !important; }
+        button[data-baseweb="tab"][aria-selected="true"] p { color: #1d4ed8 !important; }
+
         .hero { padding: 1.4rem 1.6rem; border-radius: 18px; background: linear-gradient(120deg,#0f172a,#1d4ed8); color: white; margin-bottom: 1rem; }
-        .hero h1, .hero p { color: white; margin: 0; }
+        .hero h1, .hero p { color: white !important; margin: 0; }
         .hero p { margin-top: .55rem; opacity: .92; }
         .winner { border: 2px solid #d97706; background: #fffbeb; border-radius: 16px; padding: 1.1rem 1.25rem; color: #111827; }
-        .winner h3 { margin: 0 0 .5rem 0; color: #92400e; }
+        .winner, .winner div { color: #111827 !important; }
+        .winner h3 { margin: 0 0 .5rem 0; color: #92400e !important; }
         .status { border-left: 6px solid #047857; background: #ecfdf5; color: #064e3b; padding: .8rem 1rem; border-radius: 8px; }
+        .status, .status * { color: #064e3b !important; font-weight: 650; opacity: 1 !important; }
         .note { background:#eef2ff; border-left:5px solid #4338ca; color:#1e1b4b; padding:.8rem 1rem; border-radius:8px; }
-        div[data-testid="stMetric"] { background:white; border:1px solid #d1d5db; padding:.75rem; border-radius:12px; }
+        .note, .note * { color:#1e1b4b !important; opacity:1 !important; }
+
+        div[data-testid="stMetric"] { background:#ffffff !important; border:1px solid #94a3b8; padding:.9rem; border-radius:12px; }
+        [data-testid="stMetricLabel"] p { color:#334155 !important; font-weight:750 !important; opacity:1 !important; }
+        [data-testid="stMetricValue"] { color:#0f172a !important; opacity:1 !important; }
+        [data-testid="stMetricValue"] > div { color:#0f172a !important; opacity:1 !important; }
+
+        button[kind="primary"], [data-testid="stFormSubmitButton"] button {
+            background:#1d4ed8 !important;
+            border-color:#1d4ed8 !important;
+        }
+        button[kind="primary"] p, [data-testid="stFormSubmitButton"] button p,
+        button[kind="primary"] span, [data-testid="stFormSubmitButton"] button span {
+            color:#ffffff !important;
+            font-weight:750 !important;
+        }
         .table-wrap { overflow-x:auto; margin:.5rem 0 1.25rem 0; }
         .data-table { border-collapse:collapse; width:100%; background:white; color:#111827; font-size:.92rem; }
         .data-table th { background:#0f172a; color:white; padding:.65rem; text-align:left; white-space:nowrap; }
