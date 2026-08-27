@@ -159,6 +159,71 @@ def apply_style() -> None:
         .note { background:#eef2ff; border-left:5px solid #4338ca; color:#1e1b4b; padding:.8rem 1rem; border-radius:8px; }
         .note, .note * { color:#1e1b4b !important; opacity:1 !important; }
 
+        .section-heading {
+            display:flex;
+            align-items:flex-start;
+            gap:.9rem;
+            margin:1.8rem 0 .9rem 0;
+            padding:1rem 1.15rem;
+            background:#ffffff;
+            border:1px solid #dbe2ea;
+            border-left:5px solid #1d4ed8;
+            border-radius:14px;
+            box-shadow:0 5px 16px rgba(15,23,42,.06);
+        }
+        .section-heading .section-number {
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex:0 0 2.45rem;
+            height:2.45rem;
+            border-radius:10px;
+            background:#dbeafe;
+            color:#1d4ed8 !important;
+            font-size:.82rem;
+            font-weight:850;
+            letter-spacing:.03em;
+        }
+        .section-heading .section-heading-title {
+            color:#0f172a !important;
+            font-size:1.08rem;
+            font-weight:850;
+            line-height:1.25;
+            margin:.02rem 0 .22rem 0;
+        }
+        .section-heading .section-heading-copy {
+            color:#475569 !important;
+            font-size:.9rem;
+            line-height:1.45;
+        }
+        .comparison-banner {
+            margin:2.2rem 0 1.1rem 0;
+            padding:1.35rem 1.5rem;
+            border:1px solid #bfdbfe;
+            border-radius:18px;
+            background:linear-gradient(115deg,#eff6ff 0%,#ffffff 72%);
+            box-shadow:0 8px 22px rgba(30,64,175,.07);
+        }
+        .comparison-banner .comparison-eyebrow {
+            color:#1d4ed8 !important;
+            font-size:.77rem;
+            font-weight:850;
+            letter-spacing:.1em;
+            text-transform:uppercase;
+        }
+        .comparison-banner .comparison-title {
+            color:#0f172a !important;
+            font-size:1.65rem;
+            font-weight:850;
+            letter-spacing:-.025em;
+            margin:.25rem 0 .3rem 0;
+        }
+        .comparison-banner .comparison-copy {
+            color:#475569 !important;
+            font-size:.95rem;
+            line-height:1.5;
+        }
+
         div[data-testid="stMetric"] { background:#ffffff !important; border:1px solid #94a3b8; padding:.9rem; border-radius:12px; }
         [data-testid="stMetricLabel"] p { color:#334155 !important; font-weight:750 !important; opacity:1 !important; }
         [data-testid="stMetricValue"] { color:#0f172a !important; opacity:1 !important; }
@@ -209,6 +274,21 @@ def apply_style() -> None:
         .data-table td { border-bottom:1px solid #d1d5db; padding:.58rem .65rem; white-space:nowrap; }
         .data-table tr:nth-child(even) { background:#f1f5f9; }
         </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section_header(number: str, title: str, description: str) -> None:
+    st.markdown(
+        f"""
+        <div class="section-heading">
+          <div class="section-number">{number}</div>
+          <div>
+            <div class="section-heading-title">{title}</div>
+            <div class="section-heading-copy">{description}</div>
+          </div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -297,8 +377,9 @@ def historical_tab(data: dict, contracts: dict, selection: str) -> None:
     if output and output[0] == chosen_label and output[1] == selection:
         _, _, featured, detailed = output
         show_featured(featured, contracts["best_model"])
-        st.markdown("#### Selected model results")
+        section_header("A", "Detailed forecasts", "Review the selected model's H1–H7 predictions and the historical outcomes revealed after forecasting.")
         show_result_table(detailed, historical=True)
+        section_header("B", "Forecast path", "Compare the seven direct forecast horizons with the current price and the revealed historical path.")
         st.plotly_chart(
             forecast_figure(detailed, float(canonical_row["Current_Price"]), contracts["best_model"], historical=True),
             width="stretch", theme=None,
@@ -342,8 +423,9 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
     if output and output[0] == selection and output[1] == current_signature:
         _, _, featured, detailed, feature_row = output
         show_featured(featured, contracts["best_model"])
-        st.markdown("#### Selected model results")
+        section_header("A", "Detailed forecasts", "Review the selected model's seven direct forecasts from H1 to H7.")
         show_result_table(detailed)
+        section_header("B", "Forecast path", "See the projected price path across all seven forecast horizons in one full-width chart.")
         st.plotly_chart(
             forecast_figure(detailed, float(feature_row.iloc[0]["Current_Price"]), contracts["best_model"], historical=False),
             width="stretch", theme=None,
@@ -353,9 +435,18 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
 
 
 def comparison_section(data: dict, best_model: str) -> None:
-    st.divider()
-    st.header("Historical four-model comparison")
-    st.caption("Always based on the saved 609-origin leakage-safe Evaluation evidence, never on current manual inputs.")
+    st.markdown(
+        """
+        <div class="comparison-banner">
+          <div class="comparison-eyebrow">Saved Evaluation Evidence</div>
+          <div class="comparison-title">Historical Four-Model Comparison</div>
+          <div class="comparison-copy">A structured review of Ridge, KNN, SVR and XGBoost using the same 609 leakage-safe Evaluation origins. These results never depend on the current manual input.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    section_header("01", "Overall model ranking", "Models are ranked using the saved pooled Overall Price RMSE across H1–H7.")
     ranking = data["ranking"].sort_values("Rank")
     show_plain_table(ranking, {
         "Overall_Price_RMSE": "{:,.2f}", "Overall_Price_MAE": "{:,.2f}",
@@ -370,8 +461,10 @@ def comparison_section(data: dict, best_model: str) -> None:
     )
 
     metrics = data["comparison_metrics"]
-    left, right = st.columns(2)
-    left.plotly_chart(rmse_figure(metrics), width="stretch", theme=None)
+    section_header("02", "Price RMSE by horizon", "Compare prediction error for every model from H1 to H7. Lower RMSE indicates better price accuracy.")
+    st.plotly_chart(rmse_figure(metrics), width="stretch", theme=None)
+
+    section_header("03", "Explore another metric", "Choose one additional measure below. Its chart is displayed on a separate full-width row for easier reading.")
     metric_options = {
         "RMSE skill vs persistence": "RMSE_Skill_vs_Persistence",
         "Price MAE": "Price_MAE",
@@ -379,18 +472,19 @@ def comparison_section(data: dict, best_model: str) -> None:
         "Return R²": "Return_R2",
         "Directional accuracy (%)": "Directional_Accuracy_Percent",
     }
-    label = right.selectbox("Additional metric", list(metric_options), key="comparison_metric")
-    right.plotly_chart(
+    label = st.selectbox("Additional metric", list(metric_options), key="comparison_metric")
+    st.plotly_chart(
         metric_by_horizon_figure(metrics, metric_options[label], label),
         width="stretch", theme=None,
     )
 
-    st.markdown("#### Directional accuracy versus Always-Up")
+    section_header("04", "Directional accuracy versus Always-Up", "Check whether each model predicts up/down movement better than the simple Always-Up benchmark.")
     direction = metrics.loc[metrics["Horizon"].ne("Overall"), ["Model", "Horizon", "Directional_Accuracy_Percent", "Always_Up_Accuracy_Percent"]]
     show_plain_table(direction, {
         "Directional_Accuracy_Percent": "{:.2f}%", "Always_Up_Accuracy_Percent": "{:.2f}%",
     })
 
+    section_header("05", "Historical actual versus predicted prices", "Select one model and one horizon, then inspect its saved prediction path against actual prices and persistence.")
     chart_col1, chart_col2 = st.columns([1, 1])
     historical_model = chart_col1.selectbox("Historical chart model", MODEL_NAMES, index=MODEL_NAMES.index(best_model))
     historical_horizon = chart_col2.selectbox("Historical chart horizon", [f"H{h}" for h in range(1, 8)])
