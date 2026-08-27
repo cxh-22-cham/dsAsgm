@@ -331,6 +331,47 @@ def show_result_table(frame: pd.DataFrame, historical: bool = False) -> None:
     st.markdown(f'<div class="table-wrap">{styled.to_html()}</div>', unsafe_allow_html=True)
 
 
+def show_result_browser(frame: pd.DataFrame, historical: bool, key_prefix: str) -> None:
+    view = st.radio(
+        "Results view",
+        ["Show one result", "Show all results"],
+        horizontal=True,
+        key=f"{key_prefix}_results_view",
+    )
+
+    if view == "Show all results":
+        show_result_table(frame, historical=historical)
+        return
+
+    model_options = frame["Model"].drop_duplicates().tolist()
+    horizon_options = frame["Horizon"].drop_duplicates().tolist()
+
+    if len(model_options) > 1:
+        model_column, horizon_column = st.columns(2)
+        chosen_model = model_column.selectbox(
+            "Model",
+            model_options,
+            key=f"{key_prefix}_result_model",
+        )
+        chosen_horizon = horizon_column.selectbox(
+            "Horizon",
+            horizon_options,
+            key=f"{key_prefix}_result_horizon",
+        )
+    else:
+        chosen_model = model_options[0]
+        chosen_horizon = st.selectbox(
+            "Horizon",
+            horizon_options,
+            key=f"{key_prefix}_result_horizon",
+        )
+
+    selected = frame.loc[
+        frame["Model"].eq(chosen_model) & frame["Horizon"].eq(chosen_horizon)
+    ]
+    show_result_table(selected, historical=historical)
+
+
 def show_plain_table(frame: pd.DataFrame, formats: dict | None = None) -> None:
     styled = frame.style.hide(axis="index").set_table_attributes('class="data-table"')
     if formats:
@@ -376,8 +417,12 @@ def historical_tab(data: dict, contracts: dict, selection: str) -> None:
     if output and output[0] == chosen_label and output[1] == selection:
         _, _, featured, detailed = output
         show_featured(featured, contracts["best_model"])
-        section_header("A", "Detailed forecasts", "Review the selected model's H1–H7 predictions and the historical outcomes revealed after forecasting.")
-        show_result_table(detailed, historical=True)
+        section_header("A", "Detailed forecasts", "Show one Model–Horizon result or open the complete results table.")
+        show_result_browser(
+            detailed,
+            historical=True,
+            key_prefix=f'historical_{selection.replace(" ", "_").lower()}',
+        )
         section_header("B", "Forecast path", "Compare the seven direct forecast horizons with the current price and the revealed historical path.")
         st.plotly_chart(
             forecast_figure(detailed, float(canonical_row["Current_Price"]), contracts["best_model"], historical=True),
@@ -422,8 +467,12 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
     if output and output[0] == selection and output[1] == current_signature:
         _, _, featured, detailed, feature_row = output
         show_featured(featured, contracts["best_model"])
-        section_header("A", "Detailed forecasts", "Review the selected model's seven direct forecasts from H1 to H7.")
-        show_result_table(detailed)
+        section_header("A", "Detailed forecasts", "Show one Model–Horizon result or open the complete results table.")
+        show_result_browser(
+            detailed,
+            historical=False,
+            key_prefix=f'manual_{selection.replace(" ", "_").lower()}',
+        )
         section_header("B", "Forecast path", "See the projected price path across all seven forecast horizons in one full-width chart.")
         st.plotly_chart(
             forecast_figure(detailed, float(feature_row.iloc[0]["Current_Price"]), contracts["best_model"], historical=False),
