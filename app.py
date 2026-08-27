@@ -334,41 +334,22 @@ def show_result_table(frame: pd.DataFrame, historical: bool = False) -> None:
 def show_result_browser(frame: pd.DataFrame, historical: bool, key_prefix: str) -> None:
     view = st.radio(
         "Results view",
-        ["Show one result", "Show all results"],
+        ["Show one horizon", "Show all horizons"],
         horizontal=True,
         key=f"{key_prefix}_results_view",
     )
 
-    if view == "Show all results":
+    if view == "Show all horizons":
         show_result_table(frame, historical=historical)
         return
 
-    model_options = frame["Model"].drop_duplicates().tolist()
     horizon_options = frame["Horizon"].drop_duplicates().tolist()
-
-    if len(model_options) > 1:
-        model_column, horizon_column = st.columns(2)
-        chosen_model = model_column.selectbox(
-            "Model",
-            model_options,
-            key=f"{key_prefix}_result_model",
-        )
-        chosen_horizon = horizon_column.selectbox(
-            "Horizon",
-            horizon_options,
-            key=f"{key_prefix}_result_horizon",
-        )
-    else:
-        chosen_model = model_options[0]
-        chosen_horizon = st.selectbox(
-            "Horizon",
-            horizon_options,
-            key=f"{key_prefix}_result_horizon",
-        )
-
-    selected = frame.loc[
-        frame["Model"].eq(chosen_model) & frame["Horizon"].eq(chosen_horizon)
-    ]
+    chosen_horizon = st.selectbox(
+        "Horizon",
+        horizon_options,
+        key=f"{key_prefix}_result_horizon",
+    )
+    selected = frame.loc[frame["Horizon"].eq(chosen_horizon)]
     show_result_table(selected, historical=historical)
 
 
@@ -417,7 +398,7 @@ def historical_tab(data: dict, contracts: dict, selection: str) -> None:
     if output and output[0] == chosen_label and output[1] == selection:
         _, _, featured, detailed = output
         show_featured(featured, contracts["best_model"])
-        section_header("A", "Detailed forecasts", "Show one Model–Horizon result or open the complete results table.")
+        section_header("A", "Detailed forecasts", "The results follow the model selected above. Show one horizon or all seven horizons.")
         show_result_browser(
             detailed,
             historical=True,
@@ -467,7 +448,7 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
     if output and output[0] == selection and output[1] == current_signature:
         _, _, featured, detailed, feature_row = output
         show_featured(featured, contracts["best_model"])
-        section_header("A", "Detailed forecasts", "Show one Model–Horizon result or open the complete results table.")
+        section_header("A", "Detailed forecasts", "The results follow the model selected above. Show one horizon or all seven horizons.")
         show_result_browser(
             detailed,
             historical=False,
