@@ -299,7 +299,10 @@ def historical_tab(data: dict, contracts: dict, selection: str) -> None:
         show_featured(featured, contracts["best_model"])
         st.markdown("#### Selected model results")
         show_result_table(detailed, historical=True)
-        st.plotly_chart(forecast_figure(detailed, float(canonical_row["Current_Price"]), contracts["best_model"], historical=True), width="stretch")
+        st.plotly_chart(
+            forecast_figure(detailed, float(canonical_row["Current_Price"]), contracts["best_model"], historical=True),
+            width="stretch", theme=None,
+        )
         st.caption("Actual values are shown only because this is a historical replay; they were revealed after each original forecast.")
 
 
@@ -341,7 +344,10 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
         show_featured(featured, contracts["best_model"])
         st.markdown("#### Selected model results")
         show_result_table(detailed)
-        st.plotly_chart(forecast_figure(detailed, float(feature_row.iloc[0]["Current_Price"]), contracts["best_model"], historical=False), width="stretch")
+        st.plotly_chart(
+            forecast_figure(detailed, float(feature_row.iloc[0]["Current_Price"]), contracts["best_model"], historical=False),
+            width="stretch", theme=None,
+        )
         with st.expander("View the 22 ordered predictors sent to every Pipeline"):
             show_plain_table(feature_row, {column: "{:.8g}" for column in feature_row.columns})
 
@@ -365,7 +371,7 @@ def comparison_section(data: dict, best_model: str) -> None:
 
     metrics = data["comparison_metrics"]
     left, right = st.columns(2)
-    left.plotly_chart(rmse_figure(metrics), width="stretch")
+    left.plotly_chart(rmse_figure(metrics), width="stretch", theme=None)
     metric_options = {
         "RMSE skill vs persistence": "RMSE_Skill_vs_Persistence",
         "Price MAE": "Price_MAE",
@@ -374,7 +380,10 @@ def comparison_section(data: dict, best_model: str) -> None:
         "Directional accuracy (%)": "Directional_Accuracy_Percent",
     }
     label = right.selectbox("Additional metric", list(metric_options), key="comparison_metric")
-    right.plotly_chart(metric_by_horizon_figure(metrics, metric_options[label], label), width="stretch")
+    right.plotly_chart(
+        metric_by_horizon_figure(metrics, metric_options[label], label),
+        width="stretch", theme=None,
+    )
 
     st.markdown("#### Directional accuracy versus Always-Up")
     direction = metrics.loc[metrics["Horizon"].ne("Overall"), ["Model", "Horizon", "Directional_Accuracy_Percent", "Always_Up_Accuracy_Percent"]]
@@ -385,7 +394,10 @@ def comparison_section(data: dict, best_model: str) -> None:
     chart_col1, chart_col2 = st.columns([1, 1])
     historical_model = chart_col1.selectbox("Historical chart model", MODEL_NAMES, index=MODEL_NAMES.index(best_model))
     historical_horizon = chart_col2.selectbox("Historical chart horizon", [f"H{h}" for h in range(1, 8)])
-    st.plotly_chart(actual_vs_predicted_figure(data["predictions"][historical_model], historical_model, historical_horizon), width="stretch")
+    st.plotly_chart(
+        actual_vs_predicted_figure(data["predictions"][historical_model], historical_model, historical_horizon),
+        width="stretch", theme=None,
+    )
 
     st.markdown(
         '<div class="note"><b>How to read these metrics:</b> Positive RMSE skill means the model beat persistence; negative skill means persistence was better. '
