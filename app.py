@@ -483,7 +483,7 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
             show_plain_table(feature_row, {column: "{:.8g}" for column in feature_row.columns})
 
 
-def comparison_section(data: dict, best_model: str) -> None:
+def comparison_section(data: dict, best_model: str, bundles: dict) -> None:
     st.markdown(
         """
         <div class="comparison-banner">
@@ -533,16 +533,30 @@ def comparison_section(data: dict, best_model: str) -> None:
         "Directional_Accuracy_Percent": "{:.2f}%", "Always_Up_Accuracy_Percent": "{:.2f}%",
     })
 
-    section_header("05", "Historical performance and future forecast", "Inspect saved historical performance, then extend the line with the latest Manual Input H1–H7 forecast.")
+    section_header("05", "Historical performance and future forecast", "The graph automatically continues beyond the final historical record with the selected model's H1–H7 forecast.")
     chart_col1, chart_col2 = st.columns([1, 1])
     historical_model = chart_col1.selectbox("Historical chart model", MODEL_NAMES, index=MODEL_NAMES.index(best_model))
     historical_horizon = chart_col2.selectbox("Historical chart horizon", [f"H{h}" for h in range(1, 8)])
-    future_results = None
-    forecast_origin_date = None
+
+    # Always provide a seven-horizon extension using the latest stored input
+    # values. A submitted Manual Input forecast replaces this automatic default.
+    defaults, prior, external = latest_manual_defaults(data["canonical"])
+    latest_feature_row = build_feature_row(defaults, prior, external, PREDICTORS)
+    automatic_forecasts = predict_manual(latest_feature_row, bundles, MODEL_NAMES)
+    forecast_origin_date = max(
+        frame["Target_Date"].max() for frame in data["predictions"].values()
+    )
+    all_future_forecasts = automatic_forecasts
+    forecast_source = "latest stored input values"
+
     manual_output = st.session_state.get("manual_output")
     if manual_output and len(manual_output) == 7:
-        _, _, forecast_origin_date, _, _, _, all_forecasts = manual_output
-        future_results = all_forecasts.loc[all_forecasts["Model"].eq(historical_model)].copy()
+        _, _, forecast_origin_date, _, _, _, all_future_forecasts = manual_output
+        forecast_source = "latest Manual Input"
+
+    future_results = all_future_forecasts.loc[
+        all_future_forecasts["Model"].eq(historical_model)
+    ].copy()
     st.plotly_chart(
         actual_vs_predicted_figure(
             data["predictions"][historical_model],
@@ -553,10 +567,10 @@ def comparison_section(data: dict, best_model: str) -> None:
         ),
         width="stretch", theme=None,
     )
-    if future_results is None:
-        st.caption("Generate a forecast in the Manual Input tab to extend this chart with the next H1–H7 projection.")
-    else:
-        st.caption("The dashed H1–H7 extension is the latest Manual Input forecast. Future positions use business-day spacing; horizons represent recorded observations ahead.")
+    st.caption(
+        f'The dashed extension shows the {forecast_source} H1–H7 forecast. '
+        'Future positions use business-day spacing; horizons represent recorded observations ahead.'
+    )
 
 def main() -> None:
     apply_style()
@@ -594,7 +608,7 @@ def main() -> None:
     with tab2:
         manual_tab(data, bundles, contracts, selection)
 
-    comparison_section(data, contracts["best_model"])
+    comparison_section(data, contracts["best_model"], bundles)
 
     with st.expander("Methodology and limitations", expanded=False):
         st.markdown(
