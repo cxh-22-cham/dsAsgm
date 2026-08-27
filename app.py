@@ -416,7 +416,16 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
     st.subheader("Manual Input Forecast")
     st.caption("Enter the current market values to generate H1–H7 forecasts.")
     defaults, prior, external = latest_manual_defaults(data["canonical"])
+    latest_historical_date = max(
+        frame["Target_Date"].max() for frame in data["predictions"].values()
+    ).date()
     with st.form("manual_form"):
+        forecast_origin_date = st.date_input(
+            "Forecast origin date",
+            value=latest_historical_date,
+            min_value=latest_historical_date,
+            help="This date positions the future H1–H7 forecast after the saved historical period; it is not used as a model predictor.",
+        )
         columns = st.columns(4)
         entered = {}
         for index, field in enumerate(VISIBLE_FIELDS):
@@ -439,14 +448,19 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
         else:
             feature_row = build_feature_row(entered, prior, external, PREDICTORS)
             detailed_models = selected_models(selection, MODEL_NAMES)
-            featured = predict_manual(feature_row, bundles, [contracts["best_model"]])
-            detailed = predict_manual(feature_row, bundles, detailed_models)
-            st.session_state["manual_output"] = (selection, tuple(entered.values()), featured, detailed, feature_row)
+            all_forecasts = predict_manual(feature_row, bundles, MODEL_NAMES)
+            featured = all_forecasts.loc[all_forecasts["Model"].eq(contracts["best_model"])].copy()
+            detailed = all_forecasts.loc[all_forecasts["Model"].isin(detailed_models)].copy()
+            signature = (forecast_origin_date, *tuple(entered.values()))
+            st.session_state["manual_output"] = (
+                selection, signature, pd.Timestamp(forecast_origin_date),
+                featured, detailed, feature_row, all_forecasts,
+            )
 
     output = st.session_state.get("manual_output")
-    current_signature = tuple(entered.values())
+    current_signature = (forecast_origin_date, *tuple(entered.values()))
     if output and output[0] == selection and output[1] == current_signature:
-        _, _, featured, detailed, feature_row = output
+        _, _, saved_origin_date, featured, detailed, feature_row, _ = output
         show_featured(featured, contracts["best_model"])
         section_header("A", "Detailed forecasts", "The results follow the model selected above. Show one horizon or all seven horizons.")
         show_result_browser(
@@ -456,7 +470,13 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
         )
         section_header("B", "Forecast path", "See the projected price path across all seven forecast horizons in one full-width chart.")
         st.plotly_chart(
-            forecast_figure(detailed, float(feature_row.iloc[0]["Current_Price"]), contracts["best_model"], historical=False),
+            forecast_figure(
+                detailed,
+                float(feature_row.iloc[0]["Current_Price"]),
+                contracts["best_model"],
+                historical=False,
+                forecast_origin_date=saved_origin_date,
+            ),
             width="stretch", theme=None,
         )
         with st.expander("View the 22 ordered predictors sent to every Pipeline"):
@@ -513,14 +533,30 @@ def comparison_section(data: dict, best_model: str) -> None:
         "Directional_Accuracy_Percent": "{:.2f}%", "Always_Up_Accuracy_Percent": "{:.2f}%",
     })
 
-    section_header("05", "Historical actual versus predicted prices", "Select one model and one horizon, then inspect its saved prediction path against actual prices and persistence.")
+    section_header("05", "Historical performance and future forecast", "Inspect saved historical performance, then extend the line with the latest Manual Input H1–H7 forecast.")
     chart_col1, chart_col2 = st.columns([1, 1])
     historical_model = chart_col1.selectbox("Historical chart model", MODEL_NAMES, index=MODEL_NAMES.index(best_model))
     historical_horizon = chart_col2.selectbox("Historical chart horizon", [f"H{h}" for h in range(1, 8)])
+    future_results = None
+    forecast_origin_date = None
+    manual_output = st.session_state.get("manual_output")
+    if manual_output and len(manual_output) == 7:
+        _, _, forecast_origin_date, _, _, _, all_forecasts = manual_output
+        future_results = all_forecasts.loc[all_forecasts["Model"].eq(historical_model)].copy()
     st.plotly_chart(
-        actual_vs_predicted_figure(data["predictions"][historical_model], historical_model, historical_horizon),
+        actual_vs_predicted_figure(
+            data["predictions"][historical_model],
+            historical_model,
+            historical_horizon,
+            future_results=future_results,
+            forecast_origin_date=forecast_origin_date,
+        ),
         width="stretch", theme=None,
     )
+    if future_results is None:
+        st.caption("Generate a forecast in the Manual Input tab to extend this chart with the next H1–H7 projection.")
+    else:
+        st.caption("The dashed H1–H7 extension is the latest Manual Input forecast. Future positions use business-day spacing; horizons represent recorded observations ahead.")
 
 def main() -> None:
     apply_style()
