@@ -35,6 +35,7 @@ def apply_style() -> None:
         :root { color-scheme: light; }
         .stApp, [data-testid="stAppViewContainer"] { background: #f8fafc !important; color: #111827 !important; }
         [data-testid="stHeader"] { background: rgba(248,250,252,.97) !important; }
+        .block-container { max-width: 1480px !important; padding-top: 2.2rem !important; padding-bottom: 4rem !important; }
         [data-testid="stAppViewContainer"] h1,
         [data-testid="stAppViewContainer"] h2,
         [data-testid="stAppViewContainer"] h3,
@@ -70,13 +71,86 @@ def apply_style() -> None:
             color: #111827 !important;
             border: 1px solid #64748b !important;
         }
-        [data-baseweb="tab-list"] { gap: .35rem; }
-        button[data-baseweb="tab"] p { color: #334155 !important; font-weight: 700 !important; }
-        button[data-baseweb="tab"][aria-selected="true"] p { color: #1d4ed8 !important; }
+        [data-baseweb="tab-list"] { gap:.35rem; background:#e8eef7; padding:.28rem; border-radius:12px; width:fit-content; }
+        button[data-baseweb="tab"] { border-radius:9px; padding:.45rem .9rem; }
+        button[data-baseweb="tab"] p { color:#334155 !important; font-weight:750 !important; }
+        button[data-baseweb="tab"][aria-selected="true"] { background:#ffffff !important; box-shadow:0 2px 8px rgba(15,23,42,.10); }
+        button[data-baseweb="tab"][aria-selected="true"] p { color:#1d4ed8 !important; }
 
-        .hero { padding: 1.4rem 1.6rem; border-radius: 18px; background: linear-gradient(120deg,#0f172a,#1d4ed8); color: white; margin-bottom: 1rem; }
-        .hero h1, .hero p { color: white !important; margin: 0; }
-        .hero p { margin-top: .55rem; opacity: .92; }
+        .hero {
+            position:relative;
+            overflow:hidden;
+            padding:2.25rem 2.5rem;
+            border:1px solid rgba(255,255,255,.16);
+            border-radius:24px;
+            background:linear-gradient(118deg,#071426 0%,#102a5f 54%,#1d4ed8 100%);
+            box-shadow:0 18px 45px rgba(15,23,42,.18);
+            color:#ffffff !important;
+            margin-bottom:1.15rem;
+        }
+        .hero::before {
+            content:"";
+            position:absolute;
+            width:320px;
+            height:320px;
+            right:-75px;
+            top:-150px;
+            border-radius:50%;
+            background:radial-gradient(circle,rgba(251,191,36,.35),rgba(251,191,36,0) 68%);
+        }
+        .hero::after {
+            content:"";
+            position:absolute;
+            width:220px;
+            height:220px;
+            right:15%;
+            bottom:-170px;
+            border-radius:50%;
+            background:rgba(96,165,250,.22);
+            filter:blur(4px);
+        }
+        .hero-content { position:relative; z-index:2; }
+        .hero-badge {
+            display:inline-flex;
+            align-items:center;
+            padding:.35rem .72rem;
+            border:1px solid rgba(255,255,255,.28);
+            border-radius:999px;
+            background:rgba(255,255,255,.10);
+            color:#dbeafe !important;
+            font-size:.78rem;
+            font-weight:800;
+            letter-spacing:.09em;
+            text-transform:uppercase;
+        }
+        .hero-title {
+            max-width:950px;
+            margin-top:1rem;
+            color:#ffffff !important;
+            font-size:clamp(2.25rem,4.2vw,3.85rem);
+            font-weight:850;
+            letter-spacing:-.045em;
+            line-height:1.02;
+            text-shadow:0 3px 18px rgba(0,0,0,.18);
+        }
+        .hero-title .gold { color:#fbbf24 !important; }
+        .hero-subtitle {
+            max-width:850px;
+            margin-top:1rem;
+            color:#dbeafe !important;
+            font-size:1.08rem;
+            line-height:1.6;
+        }
+        .hero-tags { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:1.15rem; }
+        .hero .hero-tag {
+            padding:.4rem .72rem;
+            border-radius:9px;
+            background:rgba(15,23,42,.42);
+            color:#ffffff !important;
+            font-size:.84rem;
+            font-weight:700;
+            border:1px solid rgba(255,255,255,.16);
+        }
         .winner { border: 2px solid #d97706; background: #fffbeb; border-radius: 16px; padding: 1.1rem 1.25rem; color: #111827; }
         .winner, .winner div { color: #111827 !important; }
         .winner h3 { margin: 0 0 .5rem 0; color: #92400e !important; }
@@ -98,6 +172,36 @@ def apply_style() -> None:
         button[kind="primary"] span, [data-testid="stFormSubmitButton"] button span {
             color:#ffffff !important;
             font-weight:750 !important;
+        }
+
+        /* Streamlit Cloud may otherwise render the expander as black-on-black. */
+        [data-testid="stExpander"],
+        [data-testid="stExpander"] details {
+            background:#ffffff !important;
+            border:1px solid #cbd5e1 !important;
+            border-radius:12px !important;
+            overflow:hidden;
+        }
+        [data-testid="stExpander"] summary {
+            background:#e8eef7 !important;
+            color:#0f172a !important;
+            padding:.75rem 1rem !important;
+        }
+        [data-testid="stExpander"] summary:hover { background:#dbe7f7 !important; }
+        [data-testid="stExpander"] summary p,
+        [data-testid="stExpander"] summary span {
+            color:#0f172a !important;
+            font-weight:750 !important;
+            opacity:1 !important;
+        }
+        [data-testid="stExpander"] summary svg {
+            fill:#1d4ed8 !important;
+            color:#1d4ed8 !important;
+        }
+        [data-testid="stExpanderDetails"] {
+            background:#ffffff !important;
+            color:#111827 !important;
+            padding:.75rem 1rem 1rem !important;
         }
         .table-wrap { overflow-x:auto; margin:.5rem 0 1.25rem 0; }
         .data-table { border-collapse:collapse; width:100%; background:white; color:#111827; font-size:.92rem; }
@@ -293,7 +397,26 @@ def comparison_section(data: dict, best_model: str) -> None:
 
 def main() -> None:
     apply_style()
-    st.markdown('<div class="hero"><h1>📈 Daily Gold Price Forecasting</h1><p>Direct cumulative return forecasts for H1–H7 using Ridge, KNN, SVR and XGBoost.</p></div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="hero">
+          <div class="hero-content">
+            <div class="hero-badge">BMDS2003 · Data Science Project</div>
+            <div class="hero-title">Daily Gold Price<br><span class="gold">Forecasting Dashboard</span></div>
+            <div class="hero-subtitle">
+              Explore leakage-safe historical Evaluation results and generate direct cumulative-return forecasts
+              using four finalized machine-learning models.
+            </div>
+            <div class="hero-tags">
+              <span class="hero-tag">H1–H7 Direct Forecasts</span>
+              <span class="hero-tag">Ridge · KNN · SVR · XGBoost</span>
+              <span class="hero-tag">No Retraining</span>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     try:
         data = cached_data()
         bundles = cached_bundles()
