@@ -151,9 +151,9 @@ def apply_style() -> None:
             font-weight:700;
             border:1px solid rgba(255,255,255,.16);
         }
-        .winner { border: 2px solid #d97706; background: #fffbeb; border-radius: 16px; padding: 1.1rem 1.25rem; color: #111827; }
+        .winner { border: 1px solid #f59e0b; background: #fffbeb; border-radius: 12px; padding: .72rem 1rem; color: #111827; }
         .winner, .winner div { color: #111827 !important; }
-        .winner h3 { margin: 0 0 .5rem 0; color: #92400e !important; }
+        .winner h3 { margin: 0; color: #92400e !important; font-size:1.02rem; }
         .status { border-left: 6px solid #047857; background: #ecfdf5; color: #064e3b; padding: .8rem 1rem; border-radius: 8px; }
         .status, .status * { color: #064e3b !important; font-weight: 650; opacity: 1 !important; }
         .note { background:#eef2ff; border-left:5px solid #4338ca; color:#1e1b4b; padding:.8rem 1rem; border-radius:8px; }
@@ -341,7 +341,7 @@ def show_plain_table(frame: pd.DataFrame, formats: dict | None = None) -> None:
 def show_featured(featured: pd.DataFrame, best_model: str) -> None:
     h1 = featured.loc[(featured["Model"].eq(best_model)) & (featured["Horizon"].eq("H1"))].iloc[0]
     direction = h1["Direction"]
-    st.markdown(f'<div class="winner"><h3>★ Official comparison winner: {best_model}</h3><div>This is the winner from the saved full Evaluation ranking—not from the current input.</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="winner"><h3>★ Best overall Evaluation model: {best_model}</h3></div>', unsafe_allow_html=True)
     values = [
         ("Current Price", f'{h1["Current Price"]:,.2f}'),
         ("H1 Return", f'{h1["Predicted Return"]:.6f}'),
@@ -357,8 +357,7 @@ def show_featured(featured: pd.DataFrame, best_model: str) -> None:
 
 
 def historical_tab(data: dict, contracts: dict, selection: str) -> None:
-    st.subheader("Historical leakage-safe Evaluation replay")
-    st.caption("Uses saved expanding walk-forward predictions. The all-data deployment models are not called in this tab.")
+    st.subheader("Historical Evaluation results")
     date_labels = [date.strftime("%Y-%m-%d") for date in contracts["common_dates"]]
     chosen_label = st.selectbox("Evaluation Origin Date (609 common dates only)", date_labels)
     chosen_date = pd.Timestamp(chosen_label)
@@ -384,12 +383,12 @@ def historical_tab(data: dict, contracts: dict, selection: str) -> None:
             forecast_figure(detailed, float(canonical_row["Current_Price"]), contracts["best_model"], historical=True),
             width="stretch", theme=None,
         )
-        st.caption("Actual values are shown only because this is a historical replay; they were revealed after each original forecast.")
+        st.caption("Actual values are available here because this date is part of the completed Evaluation period.")
 
 
 def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> None:
-    st.subheader("Manual Input — deployment forecast")
-    st.caption("Enter one current market record. Each H1–H7 value is produced directly by its own saved fitted Pipeline.")
+    st.subheader("Manual Input Forecast")
+    st.caption("Enter the current market values to generate H1–H7 forecasts.")
     defaults, prior, external = latest_manual_defaults(data["canonical"])
     with st.form("manual_form"):
         columns = st.columns(4)
@@ -401,7 +400,7 @@ def manual_tab(data: dict, bundles: dict, contracts: dict, selection: str) -> No
             f'<div class="note"><b>Read-only stored external values</b><br>'
             f'USD Index return lag 1: {external[EXTERNAL_FIELDS[0]]:.6f}<br>'
             f'US 10Y real-yield change lag 1: {external[EXTERNAL_FIELDS[1]]:.6f}<br>'
-            'These are the latest stored coursework values—not live data.</div>',
+            'Stored values used by the models; they are not live data.</div>',
             unsafe_allow_html=True,
         )
         submitted = st.form_submit_button("Generate direct H1–H7 forecast", type="primary")
@@ -438,9 +437,9 @@ def comparison_section(data: dict, best_model: str) -> None:
     st.markdown(
         """
         <div class="comparison-banner">
-          <div class="comparison-eyebrow">Saved Evaluation Evidence</div>
+          <div class="comparison-eyebrow">Model Performance</div>
           <div class="comparison-title">Historical Four-Model Comparison</div>
-          <div class="comparison-copy">A structured review of Ridge, KNN, SVR and XGBoost using the same 609 leakage-safe Evaluation origins. These results never depend on the current manual input.</div>
+          <div class="comparison-copy">Compare Ridge, KNN, SVR and XGBoost across the same Evaluation period.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -454,10 +453,10 @@ def comparison_section(data: dict, best_model: str) -> None:
         "Overall_RMSE_Skill_vs_Persistence": "{:.4f}",
     })
     winner = ranking.iloc[0]
-    st.success(
-        f'{best_model} is the official winner because it has the lowest saved pooled Overall Price RMSE '
-        f'({winner["Overall_Price_RMSE"]:,.2f}) without recalculating from rounded display values. '
-        f'Its pooled RMSE skill versus persistence is {winner["Overall_RMSE_Skill_vs_Persistence"] * 100:.2f}%.'
+    st.markdown(
+        f'**Best overall model: {best_model}** — Overall Price RMSE: '
+        f'{winner["Overall_Price_RMSE"]:,.2f} · RMSE skill: '
+        f'{winner["Overall_RMSE_Skill_vs_Persistence"] * 100:.2f}%'
     )
 
     metrics = data["comparison_metrics"]
@@ -493,14 +492,6 @@ def comparison_section(data: dict, best_model: str) -> None:
         width="stretch", theme=None,
     )
 
-    st.markdown(
-        '<div class="note"><b>How to read these metrics:</b> Positive RMSE skill means the model beat persistence; negative skill means persistence was better. '
-        'A high Price R² can mainly reflect adjacent-price persistence, while Return R² tests the harder return signal. '
-        'Directional accuracy should be judged against the saved Always-Up accuracy. Overall rows pool all H1–H7 forecasts.</div>',
-        unsafe_allow_html=True,
-    )
-
-
 def main() -> None:
     apply_style()
     st.markdown(
@@ -510,8 +501,7 @@ def main() -> None:
             <div class="hero-badge">BMDS2003 · Data Science Project</div>
             <div class="hero-title">Daily Gold Price<br><span class="gold">Forecasting Dashboard</span></div>
             <div class="hero-subtitle">
-              Explore leakage-safe historical Evaluation results and generate direct cumulative-return forecasts
-              using four finalized machine-learning models.
+              Compare four machine-learning models and explore direct H1–H7 gold-price forecasts.
             </div>
             <div class="hero-tags">
               <span class="hero-tag">H1–H7 Direct Forecasts</span>
@@ -531,11 +521,6 @@ def main() -> None:
         st.error(f"Startup validation failed: {error}")
         st.stop()
 
-    st.markdown(
-        f'<div class="status"><b>Startup validation: PASS</b> — 4 models, 7 Pipelines each, 22 predictors, '
-        f'609 Evaluation origins, and exact feature parity (max error {contracts["feature_parity"]["max_absolute_error"]:.2e}).</div>',
-        unsafe_allow_html=True,
-    )
     selection = st.selectbox("Forecast display", ["All Models", *MODEL_NAMES])
     tab1, tab2 = st.tabs(["Existing Evaluation Date", "Manual Input"])
     with tab1:
@@ -543,10 +528,9 @@ def main() -> None:
     with tab2:
         manual_tab(data, bundles, contracts, selection)
 
-    st.info("The two tabs use different valid model states: historical replay uses step-specific saved walk-forward evidence; manual forecasting uses final all-data deployment Pipelines. Their outputs are not expected to match.")
     comparison_section(data, contracts["best_model"])
 
-    with st.expander("Model information, methodology and limitations", expanded=True):
+    with st.expander("Methodology and limitations", expanded=False):
         st.markdown(
             """
             - **Objective:** educational comparison of Ridge, KNN, SVR and XGBoost for direct cumulative gold-price return forecasting.
