@@ -33,14 +33,27 @@ def forecast_figure(results: pd.DataFrame, current_price: float, best_model: str
         x_title = "Actual target dates"
     else:
         x_title = "Recorded observations ahead"
-    figure.update_layout(title="Direct H1–H7 reconstructed price forecasts", xaxis_title=x_title, yaxis_title="Gold price (dataset units)", hovermode="x unified", legend_title="Series", height=470)
+    figure.update_layout(
+        template="plotly_white", title="Direct H1–H7 reconstructed price forecasts",
+        xaxis_title=x_title, yaxis_title="Gold price (dataset units)", hovermode="x unified",
+        legend_title="Series", height=470, paper_bgcolor="#ffffff", plot_bgcolor="#ffffff",
+        font={"color": "#111827"},
+    )
+    figure.update_xaxes(gridcolor="#e5e7eb")
+    figure.update_yaxes(gridcolor="#e5e7eb")
     return figure
 
 
 def metric_by_horizon_figure(metrics: pd.DataFrame, metric: str, title: str) -> go.Figure:
     horizon = metrics.loc[metrics["Horizon"].ne("Overall")].copy()
     horizon["Horizon_Number"] = horizon["Horizon"].str.removeprefix("H").astype(int)
-    return px.line(horizon, x="Horizon_Number", y=metric, color="Model", markers=True, title=title, color_discrete_map=COLORS, labels={"Horizon_Number": "Horizon", metric: title})
+    figure = px.line(
+        horizon, x="Horizon_Number", y=metric, color="Model", markers=True,
+        title=title, color_discrete_map=COLORS,
+        labels={"Horizon_Number": "Horizon", metric: title}, template="plotly_white",
+    )
+    figure.update_layout(paper_bgcolor="#ffffff", plot_bgcolor="#ffffff", font={"color": "#111827"})
+    return figure
 
 
 def rmse_figure(metrics: pd.DataFrame) -> go.Figure:
@@ -49,7 +62,10 @@ def rmse_figure(metrics: pd.DataFrame) -> go.Figure:
     figure = px.line(horizon, x="Horizon_Number", y="Price_RMSE", color="Model", markers=True, color_discrete_map=COLORS, title="Price RMSE by horizon")
     persistence = horizon.drop_duplicates("Horizon_Number").sort_values("Horizon_Number")
     figure.add_trace(go.Scatter(x=persistence["Horizon_Number"], y=persistence["Persistence_Price_RMSE"], name="Persistence", mode="lines+markers", line={"color": "#6B7280", "dash": "dash", "width": 3}))
-    figure.update_layout(xaxis_title="Horizon", yaxis_title="RMSE")
+    figure.update_layout(
+        template="plotly_white", xaxis_title="Horizon", yaxis_title="RMSE",
+        paper_bgcolor="#ffffff", plot_bgcolor="#ffffff", font={"color": "#111827"},
+    )
     return figure
 
 
@@ -59,5 +75,11 @@ def actual_vs_predicted_figure(predictions: pd.DataFrame, model: str, horizon: s
     figure.add_trace(go.Scatter(x=data["Target_Date"], y=data["Actual_Price"], name="Actual", line={"color": "#111827"}))
     figure.add_trace(go.Scatter(x=data["Target_Date"], y=data["Predicted_Price"], name=f"{model} predicted", line={"color": COLORS.get(model)}))
     figure.add_trace(go.Scatter(x=data["Target_Date"], y=data["Persistence_Price"], name="Persistence", line={"color": "#6B7280", "dash": "dot"}))
-    figure.update_layout(title=f"Actual vs predicted — {model} {horizon}", xaxis_title="Target date", yaxis_title="Gold price (dataset units)", height=430)
+    figure.update_layout(
+        template="plotly_white", title=f"Actual vs predicted — {model} {horizon}",
+        xaxis_title="Target date", yaxis_title="Gold price (dataset units)", height=430,
+        paper_bgcolor="#ffffff", plot_bgcolor="#ffffff", font={"color": "#111827"},
+    )
+    figure.update_xaxes(gridcolor="#e5e7eb")
+    figure.update_yaxes(gridcolor="#e5e7eb")
     return figure
